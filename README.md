@@ -165,6 +165,6 @@ python rag_engine.py --fetch-official 8477 2563
 รายละเอียดการออกแบบสถาปัตยกรรมทางวิศวกรรมซอฟต์แวร์ การประเมินผล NitiBench และการพิสูจน์ทางคณิตศาสตร์ บันทึกไว้ในเอกสาร:
 [Research_Paper_Thai_Legal_RAG_Engine_v1_TH.md](Research_Paper_Thai_Legal_RAG_Engine_v1_TH.md)
 
-**ผู้วิจัย:** นายอัตติศมี บุญเสือ (Attidmese Bunsua)  
+**ผู้วิจัย:** นายอัตติรมีซี บุญเสือ (Attidmese Bunsua)  
 **โครงการ:** Thai Law Scholar & Legal Adversary Engine (2568-2569)  
 **ใบอนุญาต:** MIT License
