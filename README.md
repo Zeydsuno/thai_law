@@ -1,0 +1,170 @@
+# Thai Law RAG Engine (ระบบปัญญาประดิษฐ์สืบค้นและวินิจฉัยกฎหมายไทยแบบไร้ภาพหลอน)
+
+ระบบ **Thai Legal RAG (Retrieval-Augmented Generation)** แบบ Local-First & Zero-Hallucination ความเร็วสูงระดับเสี้ยววินาที (< 2ms) ขับเคลื่อนด้วย **SQLite FTS5 (BM25) + Typed Cross-Reference Knowledge Graph** พร้อม **5 กลไกการคำนวณและวินิจฉัยทางนิติศาสตร์แบบดีเทอร์มินิสติก (Deterministic Legal Engines)** และการตรวจสอบความสมบูรณ์ระดับไบต์ด้วยรหัสลับ SHA-256 เทียบเคียงตัวบทจริงจากสำนักงานคณะกรรมการกฤษฎีกา 100%
+
+สถาปัตยกรรมนี้ได้รับการออกแบบและพัฒนาขึ้นเพื่อแก้ไข 4 ข้อจำกัดสำคัญของแบบทดสอบมาตรฐาน **NitiBench (arXiv:2502.10868 โดย VISAI & VISTEC)**:
+1. **แก้ Context Bloat ของ NitiLink:** ใช้ **Typed Cross-Reference Graph** กรองเฉพาะข้อยกเว้น (`EXCEPTION`), เหตุฉกรรจ์/เพิ่มโทษ (`AGGRAVATION`), มาตราเชื่อมโยง (`REFERRED`) และบทนิยาม (`DEFINITION`) ที่เป็นจุดชี้ขาดทางคดีเท่านั้น
+2. **แก้ Nested Structure:** เชื่อมโยงมาตราความผิดและมาตราโทษผ่าน Relational Foreign Key ข้ามประมวลกฎหมาย ทำให้สืบค้นผลทางกฎหมายได้ครบถ้วนแม้บทบัญญัติจะอยู่ต่างหมวดหรือต่างประมวล
+3. **แก้ Missable Details:** ใช้ **Hybrid Search (SQLite FTS5 + LIKE Fallback + Semantic Intent Mapping)** ลดจุดอ่อนของการสืบค้นแบบเวกเตอร์ (Vector Search) ที่มักแยกคำเฉพาะทางกฎหมายไม่ออก
+4. **แก้ Hidden Hierarchical Information:** ทุกระเบียนระบุ `hierarchy_path` (เช่น `ป.พ.พ. > บรรพ 3 > ลักษณะ 9 > หมวด 2 > มาตรา 653`) ป้องกันความสับสนระหว่างมาตราที่มีคำคล้ายกันแต่อยู่คนละหมวด
+
+---
+
+## สรุปฐานข้อมูลคลังกฎหมาย (Database Summary)
+
+- **ตัวบทกฎหมายรับรองระดับไบต์ (Legal Sections)**: 142 มาตรา (ครอบคลุม ป.อ., ป.พ.พ., ป.วิ.อ., ป.วิ.พ., ประมวลรัษฎากร, และ พ.ร.บ./พ.ร.ก. เฉพาะทาง)
+- **ความสมบูรณ์เชิงรหัสลับ (Cryptographic Parity)**: 142/142 รายการ (100.00% SHA-256 Verbatim Match กับกฤษฎีกา)
+- **โครงข่ายความรู้ข้ามประมวล (Cross References)**: 67 เส้นเชื่อม (`EXCEPTION`, `AGGRAVATION`, `REFERRED`, `DEFINITION`)
+- **คำพิพากษาศาลฎีกาบรรทัดฐาน (Legal Precedents)**: 1,049 คำพิพากษา (คัดกรองจาก TSCC Dataset และยืนยันตรงกับระบบศาลฎีกา `deka.supremecourt.or.th`)
+- **พจนานุกรมคำนิยามศัพท์ (Legal Glossary)**: 50 คำนิยาม
+- **การทดสอบมาตรฐานวิศวกรรม 4 มิติ**: ผ่าน 103 / 103 กรณีทดสอบ (Pass Rate 100.00% ใน 0.34 วินาที)
+
+---
+
+## โครงสร้างโปรเจกต์ (Project Structure)
+
+```
+thai_law/
+├── data/
+│   ├── thai_law.db           # ฐานข้อมูล SQLite FTS5 (ตัวบท + ฎีกา + กราฟ + คำนิยาม)
+│   ├── thai_law.db.zip       # ไฟล์บีบอัดสำรอง (Auto-extract อัตโนมัติหากไฟล์ .db หาย)
+│   └── corpus_sections.json  # สรุปโครงสร้างคลังตัวบทในรูปแบบ JSON
+├── raw_sources/              # ไฟล์ตัวบทกฎหมายต้นฉบับกฤษฎีกาแยกตามหมวดหมู่ (142 ไฟล์)
+│   └── manifest.json         # บัญชีคุมรหัสลับ SHA-256 ระดับไบต์
+├── compile_corpus.py         # ตัวคอมไพล์ฐานข้อมูลและ Seed ข้อมูล (รองรับ --force)
+├── harvester.py              # เครื่องมือสกัดตัวบทดิบและคำนวณแฮช SHA-256 บันทึกลง raw_sources
+├── verify_integrity.py       # เครื่องมือ Audit ตรวจสอบความถูกต้องระดับไบต์ (Cryptographic Parity)
+├── rag_engine.py             # กลไกสืบค้น RAG Engine, กราฟความรู้, และ 5 เครื่องมือวินิจฉัย
+├── test_suite_audit.py       # ชุดทดสอบอัตโนมัติ 4 มิติ (Base, Boundary, Edge, Corner รวม 103 เคส)
+├── ingest_tscc.py            # ตัวนำเข้าคลังคำพิพากษาศาลฎีกาจาก TSCC Dataset
+├── AUDIT_REPORT.md           # รายงานผลการ Audit คุณภาพระบบ 4 มิติ
+├── Research_Paper_Thai_Legal_RAG_Engine_v1_TH.md # เอกสารงานวิจัยฉบับสมบูรณ์
+├── LICENSE                   # สัญญาอนุญาตซอฟต์แวร์แบบ MIT
+└── README.md                 # คู่มือการใช้งานระบบ
+```
+
+---
+
+## การติดตั้งและการเริ่มใช้งาน (Quick Start)
+
+ระบบถูกออกแบบภายใต้ปรัชญา Pure Python Standard Library **ไม่ต้องติดตั้ง Third-Party Library ใดๆ (Zero Pip Dependencies)**
+
+### 1. โคลนคลังโค้ด
+```bash
+git clone https://github.com/Zeydsuno/thai_law.git
+cd thai_law
+```
+
+### 2. ตรวจสอบความสมบูรณ์เชิงรหัสลับ (Cryptographic Parity Audit)
+```bash
+python verify_integrity.py --all
+```
+
+### 3. รันชุดทดสอบมาตรฐานวิศวกรรม 4 มิติ (103 Test Cases)
+```bash
+python test_suite_audit.py
+```
+
+---
+
+## กลไกการคำนวณและวินิจฉัยทางนิติศาสตร์ 5 ระบบ (5 Deterministic Engines)
+
+### 1. ระบบตรวจสอบความสามารถในการรับฟังพยานหลักฐาน (Evidence Admissibility Engine)
+วินิจฉัยกฎการรับฟังพยานหลักฐานตาม ป.วิ.พ. ม.94 (Parol Evidence Rule), สัญญากู้ยืมเงินเกิน 2,000 บาท ตาม ป.พ.พ. ม.653, ความสมบูรณ์ของหลักฐานดิจิทัลตาม พ.ร.บ.ว่าด้วยธุรกรรมทางอิเล็กทรอนิกส์ พ.ศ. 2544 (ม.7 ถึง 12), ข้อยกเว้นการสืบพยานบุคคลหักล้างเอกสารตาม ม.94 วรรคท้าย (นิติกรรมอำพราง, ความไม่สมบูรณ์แห่งมูลหนี้/ไม่ได้รับเงินกู้จริงตามฎีกา 8477/2563 และ 4101/2562, เหตุสุดวิสัยเอกสารสูญหาย ม.93(2)), และข้อเตือนการปิดอากรแสตมป์ตาม ป.รัษฎากร ม.118
+
+```bash
+# ตัวอย่าง: กู้ยืมเงิน 100,000 บาท ผ่านแชต LINE มีสลิปโอนเงิน
+python rag_engine.py --evidence '{"dispute_type": "loan", "amount": 100000, "has_written_contract": false, "electronic_evidence": ["line_chat", "bank_transfer_slip"]}'
+
+# ตัวอย่าง: กู้ยืมเงินมีสัญญาเป็นหนังสือ แต่ต่อสู้ว่าไม่ได้รับเงินกู้จริง (ม.94 วรรคท้าย)
+python rag_engine.py --evidence '{"dispute_type": "loan", "amount": 200000, "has_written_contract": true, "exceptions_claimed": ["no_consideration"]}'
+```
+
+### 2. เครื่องคำนวณแบ่งทรัพย์มรดก (ป.พ.พ. ม.1599, 1629, 1630, 1635)
+คำนวณสัดส่วนทายาทโดยธรรม 6 ลำดับและคู่สมรสตามหลักญาติสนิทตัดญาติห่าง บิดามารดารับส่วนแบ่งเสมือนชั้นบุตร และสัดส่วนคู่สมรสตาม ม.1635
+
+```bash
+python rag_engine.py --inheritance '{"estate": 1200000, "spouse": true, "children": 2, "parents": 1}'
+```
+
+### 3. เครื่องคำนวณอายุความ (ป.อ. ม.95, 96 / ป.พ.พ. ม.193/30, 448)
+คำนวณอายุความฟ้องร้อง พร้อมระบบเตือนเงื่อนไขคดียอมความได้ที่ต้องร้องทุกข์ภายใน 3 เดือนตาม ป.อ. ม.96
+
+```bash
+# คดีอาญา (เตือนอายุความร้องทุกข์ 3 เดือนในคดียอมความได้)
+python rag_engine.py --limitations '{"case_type": "criminal", "penalty_years": 3, "is_compoundable": true}'
+
+# คดีแพ่ง (ละเมิด 1 ปี, สัญญากู้ยืม 10 ปี, สิทธิเรียกร้องค่าจ้างแรงงาน 2 ปี)
+python rag_engine.py --limitations '{"case_type": "civil", "claim_type": "tort"}'
+```
+
+### 4. เครื่องคำนวณค่าชดเชยการเลิกจ้าง (พ.ร.บ. คุ้มครองแรงงาน ม.118, 119)
+คำนวณอัตราค่าชดเชยตามอายุงาน 6 ระดับ (30 ถึง 400 วัน) พร้อมสินจ้างแทนการบอกกล่าวล่วงหน้า (ค่าตกใจ) และตรวจจับข้อยกเว้นการเลิกจ้างตาม ม.119
+
+```bash
+python rag_engine.py --severance '{"tenure_months": 36, "monthly_wage": 45000}'
+```
+
+### 5. เครื่องคำนวณดอกเบี้ยผิดนัดและหนี้เงิน (ป.พ.พ. ม.224 & ม.654)
+คำนวณดอกเบี้ยผิดนัดอัตราใหม่ 5% ต่อปี (แก้ไขเมื่อ 11 เม.ย. 2564) โดยระบบแยกคำนวณ 2 ช่วงเวลาอัตโนมัติ (ช่วงก่อนหน้า 7.5% และช่วงหลัง 5.0%) พร้อมตรวจจับข้อตกลงดอกเบี้ยเงินกู้เกิน 15% ที่ตกเป็นโมฆะทั้งหมดตาม ม.654
+
+```bash
+# ดอกเบี้ยผิดนัดช่วงคาบเกี่ยวกฎหมายใหม่ 11 เม.ย. 2564
+python rag_engine.py --interest '{"principal": 100000, "start_date": "2020-01-01", "end_date": "2022-01-01"}'
+
+# ตรวจสอบเงินกู้ดอกเบี้ยเกินอัตรา (โมฆะเฉพาะส่วนดอกเบี้ย)
+python rag_engine.py --interest '{"principal": 50000, "start_date": "2023-01-01", "end_date": "2023-07-01", "rate": 20, "interest_type": "loan"}'
+```
+
+---
+
+## การสืบค้นตัวบทกฎหมายและฎีกาผ่าน CLI (CLI Query Guide)
+
+### 1. สืบค้นแบบรวมทุกตาราง (Omnibus Search)
+สืบค้นด้วยภาษาชาวบ้าน แปลงเป็นศัพท์เทคนิคทางกฎหมาย พร้อมดึงตัวบท ฎีกา คำนิยาม และคำเตือนขาดอายุความโดยอัตโนมัติ
+
+```bash
+python rag_engine.py --ask "บัญชีม้า โดนหลอกเปิดบัญชี"
+python rag_engine.py --ask "ยืมเงินผ่านแชตไลน์ ดอกเบี้ยเกิน"
+python rag_engine.py --ask "ทวงหนี้ประจานบนเฟซบุ๊ก"
+python rag_engine.py --ask "ตีความสัญญาสำเร็จรูป"
+python rag_engine.py --ask "หมายเรียกภาษี"
+```
+
+### 2. ดึงข้อมูลมาตราเฉพาะ (พร้อมขยาย Cross-References ข้อยกเว้นอัตโนมัติ)
+```bash
+python rag_engine.py --section 288
+python rag_engine.py --section 653 --law CIVIL
+python rag_engine.py --section 19 --law REVENUE
+python rag_engine.py --section 6 --law ACT
+```
+
+### 3. สืบค้นคำพิพากษาศาลฎีกาบรรทัดฐาน
+```bash
+python rag_engine.py --precedent "บัญชีม้า"
+python rag_engine.py --precedent "ตัวการไม่เปิดเผยชื่อ"
+python rag_engine.py --dika "8477/2563"
+```
+
+### 4. ตรวจสอบเส้นใยความสัมพันธ์ของมาตรา (Cross-References)
+```bash
+python rag_engine.py --cross-ref 653 --law CIVIL
+python rag_engine.py --cross-ref 4 --law ACT
+python rag_engine.py --cross-ref 50 --law REVENUE
+```
+
+### 5. ดึงคำพิพากษาฉบับทางการจากระบบศาลฎีกา (Tier 3 Fetch)
+```bash
+python rag_engine.py --fetch-official 8477 2563
+```
+
+---
+
+## เอกสารอ้างอิงและงานวิจัย (Research Citation)
+
+รายละเอียดการออกแบบสถาปัตยกรรมทางวิศวกรรมซอฟต์แวร์ การประเมินผล NitiBench และการพิสูจน์ทางคณิตศาสตร์ บันทึกไว้ในเอกสาร:
+[Research_Paper_Thai_Legal_RAG_Engine_v1_TH.md](Research_Paper_Thai_Legal_RAG_Engine_v1_TH.md)
+
+**ผู้วิจัย:** นายอัตติศมี บุญเสือ (Attidmese Bunsua)  
+**โครงการ:** Thai Law Scholar & Legal Adversary Engine (2568-2569)  
+**ใบอนุญาต:** MIT License
