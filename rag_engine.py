@@ -265,7 +265,7 @@ def get_db_connection():
             
     conn = sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    # Ponytail Must-Have High-Performance PRAGMAs (<1ms query latency)
+    # High-performance SQLite PRAGMAs for sub-millisecond query latency
     conn.execute("PRAGMA journal_mode = WAL;")
     conn.execute("PRAGMA synchronous = NORMAL;")
     conn.execute("PRAGMA cache_size = -16000;")
