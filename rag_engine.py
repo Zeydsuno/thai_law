@@ -33,16 +33,27 @@ if sys.platform == "win32":
         pass
 
 BASE_DIR = os.path.dirname(__file__)
-DB_PATH = os.path.join(BASE_DIR, "data", "thai_law.db")
+FULL_DB_PATH = os.path.join(BASE_DIR, "data", "thai_law.db")
+DEMO_DB_PATH = os.path.join(BASE_DIR, "data", "thai_law_demo.db")
 ZIP_PATH = os.path.join(BASE_DIR, "data", "thai_law.db.zip")
 
-# Auto-extract database if only the compressed zip archive is present
-if not os.path.exists(DB_PATH) and os.path.exists(ZIP_PATH):
+# Auto-extract full database if only the compressed zip archive is present
+if not os.path.exists(FULL_DB_PATH) and os.path.exists(ZIP_PATH):
     try:
         with zipfile.ZipFile(ZIP_PATH, "r") as zf:
             zf.extractall(os.path.join(BASE_DIR, "data"))
     except Exception as e:
         print(f"Error auto-extracting database: {e}", file=sys.stderr)
+
+if os.path.exists(FULL_DB_PATH):
+    DB_PATH = FULL_DB_PATH
+    IS_DEMO_CORPUS = False
+elif os.path.exists(DEMO_DB_PATH):
+    DB_PATH = DEMO_DB_PATH
+    IS_DEMO_CORPUS = True
+else:
+    DB_PATH = FULL_DB_PATH
+    IS_DEMO_CORPUS = False
 
 THAI_TO_LEGAL_KEYWORDS = {
     # อาญา - ทรัพย์ & ประทุษร้าย

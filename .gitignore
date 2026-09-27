@@ -14,5 +14,6 @@ Research_Paper_*.md
 thai_law.db
 data/thai_law.db
 data/thai_law.db.zip
-*.db
-*.db.zip
+
+# Allow public demo sandbox database
+!data/thai_law_demo.db
