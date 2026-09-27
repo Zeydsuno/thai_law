@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, system architecture, or dataset, please cite it as below."
+authors:
+  - family-names: "Bunsua"
+    given-names: "Attidmese"
+    affiliation: "Department of Computer Science & Software Engineering"
+    alias: "Zeydsuno"
+title: "Thai Law RAG Engine: Zero-Hallucination Legal AI Architecture with Cryptographic Verification and Hybrid Symbolic Engines"
+version: 2.0.0
+date-released: 2026-03-27
+license: "PolyForm-Noncommercial-1.0.0"
+repository-code: "https://github.com/Zeydsuno/thai_law"
+keywords:
+  - "thai-law"
+  - "legal-ai"
+  - "retrieval-augmented-generation"
+  - "sqlite-fts5"
+  - "zero-hallucination"
+  - "legaltech"
+  - "cryptographic-verification"
+abstract: "A high-precision, sub-millisecond local-first Thai Legal RAG engine powered by SQLite FTS5 (BM25), typed cross-reference knowledge graph, and 5 deterministic legal engines designed to eliminate AI hallucination."

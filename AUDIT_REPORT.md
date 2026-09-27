@@ -1,7 +1,7 @@
 # รายงานผลการ Audit และการทดสอบ 4 มิติ: Thai Law Scholar Agent & RAG System
 
 > **สถานะการตรวจสอบ:** ผ่านการทดสอบครบ 100.00% (Pass Rate: 100.00%)  
-> **จำนวนเคสทดสอบทั้งหมด:** 103 เคส (ครอบคลุมทั้ง 4 มิติ เกินเกณฑ์มาตรฐาน 10 เคสต่อมิติ)  
+> **จำนวนเคสทดสอบทั้งหมด:** 108 เคส (ครอบคลุมทั้ง 4 มิติ เกินเกณฑ์มาตรฐาน 10 เคสต่อมิติ)  
 > **ไฟล์ชุดทดสอบ:** `e:\Brainstrom\Law\test_suite_audit.py`  
 > **เป้าหมายฐานข้อมูล:** `e:\Brainstrom\Law\data\thai_law.db`
 
@@ -11,17 +11,17 @@
 
 | มิติทดสอบ (Dimension) | วัตถุประสงค์การตรวจสอบ | จำนวนเคสที่ตรวจ | ผลการทดสอบ | อัตราความสำเร็จ |
 | :--- | :--- | :---: | :---: | :---: |
-| **1. Base Cases (กรณีพื้นฐานปกติ)** | ตรวจสอบ Use Case หลัก: ตัวบทอาญา, แพ่งและพาณิชย์, พ.ร.บ./พ.ร.ก. เฉพาะ, พ.ร.บ.ข้อสัญญาที่ไม่เป็นธรรม, ประมวลรัษฎากร, ภาษาชาวบ้าน, ฎีกา, คำนิยาม, 4 เครื่องคำนวณกฎหมาย และ Evidence Engine | 32 เคส | ผ่าน 32 / 32 | **100%** |
-| **2. Boundary Cases (กรณีขอบเขต/ค่าสุดทาง)** | ตรวจสอบจุดตัด: ม.1 ถึง ม.393, ลหุโทษ vs ประหารชีวิต, ขอบเขต Limit, สัดส่วนโทษ 1/3 และ 2/3, มรดก 0 บาท, มรดกตกแผ่นดิน, อายุงาน 0-20 ปี, ดอกเบี้ย 0 วัน, เพดานดอกเบี้ยกู้ยืม 15%, จุดตัดกู้ยืมเงิน 2,000 บาท | 23 เคส | ผ่าน 23 / 23 | **100%** |
-| **3. Edge Cases (กรณีปลายขอบ/ความปลอดภัย)** | ตรวจสอบความปลอดภัย: ค่าว่าง, ช่องว่าง, รหัส/มาตราไม่มีจริง, SQL Injection (' OR '1'='1, UNION, DROP TABLE), FTS5 Special Chars, Stress Test, มรดกติดลบ, วันที่ผิดรูปแบบ, ดอกเบี้ยติดลบ, Evidence Empty/Negative | 23 เคส | ผ่าน 23 / 23 | **100%** |
-| **4. Corner Cases (กรณีซ้อนเงื่อนไขหลายมิติ)** | ตรวจสอบความถูกต้องทางนิติศาสตร์: Typed Graph Auto-Expansion (ม.288 $\rightarrow$ ม.68, ม.1474 $\rightarrow$ ม.1476, ม.118 $\rightarrow$ ม.119, ม.7 ข้อสัญญาไม่เป็นธรรม $\rightarrow$ ม.383/ม.378, ม.50 รัษฎากร $\rightarrow$ ม.40), ส่วนแบ่งมรดกคู่สมรสทับซ้อน (ม.1635), ข้อยกเว้นเลิกจ้าง ม.119, ดอกเบี้ยคาบเกี่ยว 2 อัตรา (พ.ร.ก. 2564), Parol Evidence Exceptions (ม.94 วรรคท้าย, ม.93(2)), Referencing Integrity 100% | 25 เคส | ผ่าน 25 / 25 | **100%** |
-| **รวมผลลัพธ์ทั้ง 4 มิติ** | **การประเมินความแม่นยำทางนิติศาสตร์ ความปลอดภัย และความสมบูรณ์เชิงโครงสร้าง** | **103 เคส** | **ผ่าน 103 / 103** | **100.00%** |
+| **1. Base Cases (กรณีพื้นฐานปกติ)** | ตรวจสอบ Use Case หลัก: ตัวบทอาญา, แพ่งและพาณิชย์, พ.ร.บ./พ.ร.ก. เฉพาะ, พ.ร.บ.ข้อสัญญาที่ไม่เป็นธรรม, ประมวลรัษฎากร, ภาษาชาวบ้าน, ฎีกา, คำนิยาม, 4 เครื่องคำนวณกฎหมาย, Evidence Engine และ Win Probability Engine | 33 เคส | ผ่าน 33 / 33 | **100%** |
+| **2. Boundary Cases (กรณีขอบเขต/ค่าสุดทาง)** | ตรวจสอบจุดตัด: ม.1 ถึง ม.393, ลหุโทษ vs ประหารชีวิต, ขอบเขต Limit, สัดส่วนโทษ 1/3 และ 2/3, มรดก 0 บาท, มรดกตกแผ่นดิน, อายุงาน 0-20 ปี, ดอกเบี้ย 0 วัน, เพดานดอกเบี้ยกู้ยืม 15%, จุดตัดกู้ยืมเงิน 2,000 บาท, Win Probability Clamping 5%-95% | 24 เคส | ผ่าน 24 / 24 | **100%** |
+| **3. Edge Cases (กรณีปลายขอบ/ความปลอดภัย)** | ตรวจสอบความปลอดภัย: ค่าว่าง, ช่องว่าง, รหัส/มาตราไม่มีจริง, SQL Injection (' OR '1'='1, UNION, DROP TABLE), FTS5 Special Chars, Stress Test, มรดกติดลบ, วันที่ผิดรูปแบบ, ดอกเบี้ยติดลบ, Evidence Empty/Negative, CLI JSON Parsing, Probability Default 50/50 | 25 เคส | ผ่าน 25 / 25 | **100%** |
+| **4. Corner Cases (กรณีซ้อนเงื่อนไขหลายมิติ)** | ตรวจสอบความถูกต้องทางนิติศาสตร์: Typed Graph Auto-Expansion (ม.288 $\rightarrow$ ม.68, ม.1474 $\rightarrow$ ม.1476, ม.118 $\rightarrow$ ม.119, ม.7 ข้อสัญญาไม่เป็นธรรม $\rightarrow$ ม.383/ม.378, ม.50 รัษฎากร $\rightarrow$ ม.40), ส่วนแบ่งมรดกคู่สมรสทับซ้อน (ม.1635), ข้อยกเว้นเลิกจ้าง ม.119, ดอกเบี้ยคาบเกี่ยว 2 อัตรา (พ.ร.ก. 2564), Parol Evidence Exceptions (ม.94 วรรคท้าย, ม.93(2)), Referencing Integrity 100%, Criminal Presumption + Queen Defense | 26 เคส | ผ่าน 26 / 26 | **100%** |
+| **รวมผลลัพธ์ทั้ง 4 มิติ** | **การประเมินความแม่นยำทางนิติศาสตร์ ความปลอดภัย และความสมบูรณ์เชิงโครงสร้าง** | **108 เคส** | **ผ่าน 108 / 108** | **100.00%** |
 
 ---
 
 ## รายละเอียดผลการตรวจสอบเชิงลึกในแต่ละมิติ
 
-### มิติที่ 1: Base Cases (32 เคสทดสอบ)
+### มิติที่ 1: Base Cases (33 เคสทดสอบ)
 1. `test_base_01_exact_section_murder_288`: ดึง ป.อ. ม.288 ได้ตัวบทฆ่าผู้อื่น และโทษประหารชีวิต/จำคุกตลอดชีวิต ถูกต้องสมบูรณ์
 2. `test_base_02_exact_section_theft_334`: ดึง ป.อ. ม.334 ได้ตัวบทลักทรัพย์ และองค์ประกอบ "โดยทุจริต"
 3. `test_base_03_exact_section_embezzlement_352`: ดึง ป.อ. ม.352 ยักยอกทรัพย์ ตรวจพบ flag ยอมความได้ (`compoundable = 1`)
@@ -54,10 +54,11 @@
 30. `test_base_30_evidence_loan_electronic_line_chat_admissible`: Evidence Engine สัญญากู้ยืมเงินเกิน 2,000 บาท ผ่าน LINE + สลิปโอนเงิน เป็นหลักฐานรับฟังได้ (ADMISSIBLE, HIGH)
 31. `test_base_31_evidence_loan_oral_over_2000_inadmissible`: Evidence Engine สัญญากู้ยืมเงินเกิน 2,000 บาท ด้วยวาจาล้วน ต้องห้ามรับฟังตาม ป.วิ.พ. ม.94 (INADMISSIBLE)
 32. `test_base_32_evidence_criminal_case_admissible`: Evidence Engine คดีอาญา ระบบเสรีในการรับฟังพยานหลักฐานตาม ป.วิ.อ. ม.226 รับฟังได้เสมอ
+33. `test_base_33_case_win_probability_civil_standard`: Case Win Probability Engine คดีแพ่ง ชั่งน้ำหนักพยานหลักฐานน่าเชื่อถือยิ่งกว่า (Preponderance of Evidence)
 
 ---
 
-### มิติที่ 2: Boundary Cases (23 เคสทดสอบ)
+### มิติที่ 2: Boundary Cases (24 เคสทดสอบ)
 1. `test_boundary_01_first_section_min_bound`: ขอบเขตล่างสุดของตัวบท (ป.อ. มาตรา 1 หมวดคำนิยาม)
 2. `test_boundary_02_last_section_in_corpus`: ขอบเขตบนสุดของตัวบทในคลัง (ป.อ. มาตรา 393 ดูหมิ่นซึ่งหน้า)
 3. `test_boundary_03_max_penalty_capital_punishment`: ตรวจสอบโทษสูงสุดของประมวลกฎหมายอาญา (ประหารชีวิต ใน ม.288 และ ม.289)
@@ -81,10 +82,11 @@
 21. `test_boundary_21_evidence_exact_2000_threshold`: ขอบเขตเงินกู้ยืม 2,000 บาทพอดี ด้วยวาจา รับฟังได้ (ADMISSIBLE) เพราะกฎหมายบังคับเฉพาะเกิน 2,000 บาท
 22. `test_boundary_22_evidence_2000_01_threshold`: ขอบเขตเงินกู้ยืมเกิน 2,000 บาท (2,000.01 บาท) ด้วยวาจา ต้องห้ามรับฟัง (INADMISSIBLE) ตาม ม.94
 23. `test_boundary_23_evidence_zero_amount`: Evidence Engine ยอดเงินกู้ 0 บาท ปลอดภัย ไม่เกิดข้อผิดพลาด
+24. `test_boundary_24_probability_extreme_clamp`: Case Win Probability Engine การจำกัดขอบเขต Clamping ไม่ให้ต่ำกว่า 5.0% หรือสูงกว่า 95.0%
 
 ---
 
-### มิติที่ 3: Edge Cases (23 เคสทดสอบ)
+### มิติที่ 3: Edge Cases (25 เคสทดสอบ)
 1. `test_edge_01_empty_query`: ค้นหาด้วยข้อความว่างเปล่า `""` ปลอดภัย คืนค่าเป็น List ว่าง
 2. `test_edge_02_whitespace_only_query`: ค้นหาด้วย Space และ Tab ปลอดภัย ไม่เกิดแครช
 3. `test_edge_03_nonexistent_section_number`: เรียกหาเลขมาตราที่ไม่มีอยู่จริง (999999) &rarr; คืนค่า None อย่างถูกต้อง
@@ -108,10 +110,12 @@
 21. `test_edge_21_evidence_empty_call`: เรียกใช้งาน Evidence Engine แบบไม่ส่งพารามิเตอร์ ทำงานได้ปลอดภัย ไม่เกิด Exception
 22. `test_edge_22_evidence_negative_amount`: ยอดเงินข้อพิพาทติดลบ ระบบจัดการอย่างปลอดภัย ไม่แครช
 23. `test_edge_23_evidence_unknown_dispute_fallback`: ประเภทข้อพิพาทที่ไม่รู้จัก ระบบ fallback สู่คดีแพ่งทั่วไปอย่างปลอดภัย
+24. `test_edge_24_safe_parse_json_robustness`: CLI JSON Parsing จัดการ JSON ทุกรูปแบบและ Single Quotes บน Windows PowerShell
+25. `test_edge_25_probability_empty_or_invalid_inputs`: Case Win Probability Engine ทำงานปลอดภัยเมื่อไม่ระบุพารามิเตอร์ คืนค่าเริ่มต้น 50/50
 
 ---
 
-### มิติที่ 4: Corner Cases (25 เคสทดสอบ)
+### มิติที่ 4: Corner Cases (26 เคสทดสอบ)
 1. `test_corner_01_typed_graph_expansion_murder_defense`: ค้น ม.288 (ฆ่าผู้อื่น) &rarr; ระบบขยายกราฟดึง **ม.68 (ป้องกัน - EXCEPTION)** ติดมาให้ทันที
 2. `test_corner_02_typed_graph_expansion_murder_aggravation`: ค้น ม.288 &rarr; ระบบขยายกราฟดึง **ม.289 (ฆ่าโดยไตร่ตรอง - AGGRAVATION)** ติดมาให้อัตโนมัติ
 3. `test_corner_03_compoundable_warning_in_ask_all`: ค้น "ยักยอก" (ม.352) &rarr; มีคำเตือนร้องทุกข์ภายใน **3 เดือน** ตาม ป.อ. ม.96 ชัดเจน
@@ -137,10 +141,11 @@
 23. `test_corner_23_evidence_force_majeure_lost_section_93_2`: ข้อยกเว้น ป.วิ.พ. ม.93(2) เอกสารสูญหายด้วยเหตุสุดวิสัย นำสำเนาหรือพยานบุคคลเข้าสืบแทนต้นฉบับได้
 24. `test_corner_24_unfair_contract_penalty_reduction_cross_ref`: พ.ร.บ.ข้อสัญญาที่ไม่เป็นธรรม ป.พ.พ. ม.383 และ ม.378 เชื่อมโยง ม.6 (ปรับลดมัดจำและเบี้ยปรับสูงเกินส่วน) และ ม.4 เชื่อมโยง ม.8 (ข้อยกเว้นความรับผิดตกเป็นโมฆะ)
 25. `test_corner_25_revenue_withholding_tax_cross_ref`: ประมวลรัษฎากร ม.40 ขยายกราฟสู่ ม.50 (หักภาษี ณ ที่จ่าย) และ ม.65 ขยายกราฟสู่ ม.65 ตรี (รายจ่ายต้องห้าม)
+26. `test_corner_26_case_win_probability_criminal_presumption_and_queen`: Case Win Probability Engine คดีอาญา Presumption of Innocence + Queen Defense (จำเป็น/ขาดเจตนา)
 
 ---
 
 ## สรุปบทวิเคราะห์ทางเทคนิค
 * ระบบผ่านการทดสอบครบถ้วนทั้ง 4 มิติ ด้วยอัตราสำเร็จ **100.00%**
-* ความเร็วในการรันชุดทดสอบทั้งหมด 103 เคส อยู่ที่ **< 0.5 วินาที**
+* ความเร็วในการรันชุดทดสอบทั้งหมด 108 เคส อยู่ที่ **< 0.5 วินาที**
 * โครงสร้าง Typed Graph Expansion, 4 เครื่องคำนวณกฎหมาย และ Statutory Limitation Warnings ทำงานถูกต้องแม่นยำตามหลักนิติศาสตร์ไทยทุกประการ

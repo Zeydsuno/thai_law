@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# ==============================================================================
+# Thai Law RAG Engine - Source-Available (PolyForm Noncommercial License 1.0.0)
+# Copyright (c) 2026 Attidmese Bunsua (นายอัตติรมีซี บุญเสือ). All Rights Reserved.
+#
+# This software, database architecture, and deterministic legal logic are licensed
+# under the PolyForm Noncommercial License 1.0.0 for academic research, educational
+# purposes, and evaluation only. Commercial exploitation, production hosting, or
+# deploying competitive services without prior written agreement is strictly prohibited.
+# ==============================================================================
 """
 Thai Law RAG Engine (ประมวลกฎหมายอาญา + ประมวลกฎหมายแพ่งและพาณิชย์ + พ.ร.บ.เฉพาะ + 5 Specialized Legal Engines)
 Sub-millisecond retrieval with SQLite FTS5, BM25 ranking, Typed Graph Expansion,
@@ -243,7 +252,7 @@ def get_db_connection():
         except Exception:
             _DB_CONN = None
             
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     # Ponytail Must-Have High-Performance PRAGMAs (<1ms query latency)
     conn.execute("PRAGMA journal_mode = WAL;")
@@ -1490,6 +1499,164 @@ def format_evidence_admissibility(res):
     return "\n".join(lines)
 
 
+def calculate_case_win_probability(
+    case_type="civil",
+    claimant_tier_a=0,
+    claimant_tier_b=0,
+    claimant_tier_c=0,
+    defense_tier_a=0,
+    defense_tier_b=0,
+    defense_tier_c=0,
+    fatal_loopholes_claimant=0,
+    fatal_loopholes_defense=0,
+    queen_defense_active=False,
+    procedural_defect_claimant=False
+):
+    """
+    Deterministic Mathematical Win Probability Engine (Non-Parametric Math)
+    คำนวณโอกาสชนะคดีตามมาตรฐานการพิสูจน์ (Standard of Proof) และน้ำหนักตัวหมากพยาน
+    - คดีแพ่ง: Preponderance of the Evidence (ชั่งน้ำหนักน่าเชื่อถือยิ่งกว่า 50.0%)
+    - คดีอาญา: Beyond a Reasonable Doubt (ปราศจากข้อสงสัยตามสมควร 85.0%+)
+    """
+    ct = str(case_type).lower().strip()
+    is_criminal = ct in ("criminal", "อาญา", "คดีอาญา")
+    
+    breakdown_claimant = []
+    breakdown_defense = []
+    
+    if not is_criminal:
+        # Civil Standard of Proof
+        base_claimant = 50.0
+        base_defense = 50.0
+        breakdown_claimant.append("ฐานเริ่มต้นคดีแพ่ง (Preponderance Base): 50.0 คะแนน")
+        breakdown_defense.append("ฐานเริ่มต้นคดีแพ่ง (Preponderance Base): 50.0 คะแนน")
+        
+        # Claimant evidence
+        pts_c_a = min(40.0, claimant_tier_a * 20.0)
+        pts_c_b = min(20.0, claimant_tier_b * 10.0)
+        if pts_c_a > 0:
+            breakdown_claimant.append(f"พยานเอกสารมหาชน/สเตทเมนต์ (Tier A x {claimant_tier_a}): +{pts_c_a:.1f}")
+        if pts_c_b > 0:
+            breakdown_claimant.append(f"ภาพแคปแชต/คลิปเสียง (Tier B x {claimant_tier_b}): +{pts_c_b:.1f}")
+            
+        # Defense evidence
+        pts_d_a = min(40.0, defense_tier_a * 20.0)
+        pts_d_b = min(20.0, defense_tier_b * 10.0)
+        if pts_d_a > 0:
+            breakdown_defense.append(f"พยานหลักฐานเด็ดขาดฝ่ายจำเลย (Tier A x {defense_tier_a}): +{pts_d_a:.1f}")
+        if pts_d_b > 0:
+            breakdown_defense.append(f"พยานหลักฐานฝ่ายจำเลย (Tier B x {defense_tier_b}): +{pts_d_b:.1f}")
+            
+        # Fatal Loopholes & Procedural Flaws
+        penalty_c = (fatal_loopholes_claimant * 30.0) + (25.0 if procedural_defect_claimant else 0.0)
+        if fatal_loopholes_claimant > 0:
+            breakdown_claimant.append(f"จุดตาย/ช่องโหว่ร้ายแรงโจทก์ (Loopholes x {fatal_loopholes_claimant}): -{fatal_loopholes_claimant * 30.0:.1f}")
+        if procedural_defect_claimant:
+            breakdown_claimant.append("ข้อบกพร่องทางกระบวนพิจารณาโจทก์ (Procedural Defect): -25.0")
+            
+        penalty_d = fatal_loopholes_defense * 30.0
+        if fatal_loopholes_defense > 0:
+            breakdown_defense.append(f"จุดตาย/ช่องโหว่ร้ายแรงจำเลย (Loopholes x {fatal_loopholes_defense}): -{penalty_d:.1f}")
+            
+        # Queen Defense
+        bonus_queen = 30.0 if queen_defense_active else 0.0
+        if queen_defense_active:
+            breakdown_defense.append("หมากควีน/ข้อยกเว้นกฎหมายเด็ดขาด (Queen Defense): +30.0")
+            
+        score_c = max(5.0, base_claimant + pts_c_a + pts_c_b - penalty_c)
+        score_d = max(5.0, base_defense + pts_d_a + pts_d_b + bonus_queen - penalty_d)
+        
+        prob_c = round((score_c / (score_c + score_d)) * 100.0, 1)
+        prob_d = round(100.0 - prob_c, 1)
+        
+        prob_c = max(5.0, min(95.0, prob_c))
+        prob_d = max(5.0, min(95.0, round(100.0 - prob_c, 1)))
+        
+        standard_text = "คดีแพ่ง (มาตรฐาน: การชั่งน้ำหนักพยานหลักฐานน่าเชื่อถือยิ่งกว่า 50%+)"
+    else:
+        # Criminal Standard of Proof (Presumption of Innocence)
+        base_prosecution = 35.0
+        base_defense = 65.0
+        breakdown_claimant.append("ฐานเริ่มต้นคดีอาญา (Presumption of Innocence): 35.0 คะแนน")
+        breakdown_defense.append("ฐานเริ่มต้นคดีอาญา (สิทธิสันนิษฐานว่าเป็นผู้บริสุทธิ์): 65.0 คะแนน")
+        
+        pts_p_a = min(50.0, claimant_tier_a * 25.0)
+        pts_p_b = min(20.0, claimant_tier_b * 10.0)
+        if pts_p_a > 0:
+            breakdown_claimant.append(f"ประจักษ์พยาน/พยานนิติวิทยาศาสตร์ (Tier A x {claimant_tier_a}): +{pts_p_a:.1f}")
+        if pts_p_b > 0:
+            breakdown_claimant.append(f"พยานแวดล้อมกรณีโจทก์ (Tier B x {claimant_tier_b}): +{pts_p_b:.1f}")
+            
+        pts_d_a = min(40.0, defense_tier_a * 25.0)
+        pts_d_b = min(20.0, defense_tier_b * 10.0)
+        if pts_d_a > 0:
+            breakdown_defense.append(f"พยานถิ่นที่อยู่/พยานนิติวิทยาศาสตร์จำเลย (Tier A x {defense_tier_a}): +{pts_d_a:.1f}")
+        if pts_d_b > 0:
+            breakdown_defense.append(f"พยานนำสืบหักล้างจำเลย (Tier B x {defense_tier_b}): +{pts_d_b:.1f}")
+            
+        penalty_p = (fatal_loopholes_claimant * 35.0) + (30.0 if procedural_defect_claimant else 0.0)
+        if fatal_loopholes_claimant > 0:
+            breakdown_claimant.append(f"พยานหลักฐานมิชอบ/ข้อสงสัยตามสมควร (ป.วิ.อ. 226/1, 227): -{fatal_loopholes_claimant * 35.0:.1f}")
+        if procedural_defect_claimant:
+            breakdown_claimant.append("สอบสวนมิชอบ/แจ้งข้อหาไม่มีทนาย (ป.วิ.อ. 134/4): -30.0")
+            
+        bonus_queen = 35.0 if queen_defense_active else 0.0
+        if queen_defense_active:
+            breakdown_defense.append("ข้อต่อสู้จำเป็น (ม.67) / เหยื่อค้ามนุษย์ (ม.41) / ขาดเจตนา (ม.59): +35.0")
+            
+        penalty_d = fatal_loopholes_defense * 35.0
+        if fatal_loopholes_defense > 0:
+            breakdown_defense.append(f"จำเลยถูกจับกุมพร้อมของกลาง/พิรุธชัดแจ้ง: -{penalty_d:.1f}")
+            
+        score_p = max(5.0, base_prosecution + pts_p_a + pts_p_b - penalty_p)
+        score_d = max(5.0, base_defense + pts_d_a + pts_d_b + bonus_queen - penalty_d)
+        
+        prob_c = round((score_p / (score_p + score_d)) * 100.0, 1)
+        prob_d = round(100.0 - prob_c, 1)
+        
+        prob_c = max(5.0, min(95.0, prob_c))
+        prob_d = max(5.0, min(95.0, round(100.0 - prob_c, 1)))
+        
+        standard_text = "คดีอาญา (มาตรฐาน: ปราศจากข้อสงสัยตามสมควร Beyond a Reasonable Doubt)"
+
+    silver_bullet = ""
+    if prob_c >= 70.0:
+        silver_bullet = "พยานหลักฐานฝ่ายรุก/โจทก์ครบองค์ประกอบลูกโซ่ (Chain of Custody) ปิดช่องว่างข้อสงสัย"
+    elif prob_d >= 70.0:
+        silver_bullet = "ฝ่ายจำเลยมีข้อต่อสู้ตัดตอนกระบวนพิจารณาหรือมีช่องโหว่ร้ายแรงที่ทำให้ยกประโยชน์แห่งความสงสัย"
+    else:
+        silver_bullet = "คดีอยู่ในภาวะก้ำกึ่ง ผลแพ้ชนะขึ้นอยู่กับดุลพินิจในการขอหมายศาลเรียกพยานบุคคลภายนอกตาม ป.วิ.พ. ม.123"
+
+    return {
+        "case_type": ct,
+        "standard_of_proof": standard_text,
+        "win_probability_claimant": prob_c,
+        "win_probability_defense": prob_d,
+        "breakdown_claimant": breakdown_claimant,
+        "breakdown_defense": breakdown_defense,
+        "silver_bullet": silver_bullet
+    }
+
+
+def format_case_probability(res):
+    lines = []
+    lines.append("[ผลการประเมินโอกาสชนะคดีตามหลักคณิตศาสตร์พยานหลักฐาน (Deterministic Probability Engine)]")
+    lines.append(f"   ประเภทคดี: {res['standard_of_proof']}")
+    lines.append(f"   🎯 โอกาสชนะฝ่ายรุก/โจทก์ (Offense/Prosecution): {res['win_probability_claimant']}%")
+    lines.append(f"   🛡️ โอกาสชนะฝ่ายรับ/จำเลย (Defense): {res['win_probability_defense']}%")
+    lines.append("")
+    lines.append("   [รายละเอียดการคิดคะแนนพยานหลักฐานฝ่ายรุก]:")
+    for b in res['breakdown_claimant']:
+        lines.append(f"   • {b}")
+    lines.append("")
+    lines.append("   [รายละเอียดการคิดคะแนนพยานหลักฐานฝ่ายรับ]:")
+    for b in res['breakdown_defense']:
+        lines.append(f"   • {b}")
+    lines.append("")
+    lines.append(f"   ⚡ จุดตายชี้ขาด (The Silver Bullet): {res['silver_bullet']}")
+    return "\n".join(lines)
+
+
 def format_ask_all(query, sections, precedents, glossary):
     out = []
     out.append(f"[ผลการค้นหา]: \"{query}\" (พบเนื้อหาที่เกี่ยวข้อง)")
@@ -1616,11 +1783,12 @@ def main():
     parser.add_argument("--severance", type=str, help="คำนวณค่าชดเชยเลิกจ้าง (รับ JSON เช่น '{\"tenure_months\": 24, \"monthly_wage\": 30000}')")
     parser.add_argument("--interest", type=str, help="คำนวณดอกเบี้ยผิดนัด (รับ JSON เช่น '{\"principal\": 100000, \"start_date\": \"2022-01-01\", \"end_date\": \"2024-01-01\"}')")
     parser.add_argument("--evidence", type=str, help="ตรวจสอบความสามารถในการรับฟังพยานหลักฐาน (รับ JSON เช่น '{\"dispute_type\": \"loan\", \"amount\": 50000, \"evidence_type\": \"electronic_chat\"}')")
+    parser.add_argument("--probability", type=str, help="คำนวณโอกาสชนะคดีตามหลักคณิตศาสตร์พยานหลักฐาน (รับ JSON เช่น '{\"case_type\": \"civil\", \"claimant_tier_a\": 1, \"defense_tier_b\": 1}')")
     
     args = parser.parse_args()
     
     if not any([args.ask, args.query, args.section, args.precedent, args.dika, args.fetch_official, args.glossary, args.cross_ref,
-                args.inheritance, args.limitations, args.severance, args.interest, args.evidence]):
+                args.inheritance, args.limitations, args.severance, args.interest, args.evidence, args.probability]):
         parser.print_help()
         sys.exit(0)
         
@@ -1735,6 +1903,27 @@ def main():
                 print(json.dumps(res, ensure_ascii=False, indent=2))
             else:
                 print(format_evidence_admissibility(res))
+
+        # Mathematical Win Probability Engine (Non-Parametric Math)
+        elif args.probability:
+            params = safe_parse_json(args.probability)
+            res = calculate_case_win_probability(
+                case_type=params.get("case_type", "civil"),
+                claimant_tier_a=params.get("claimant_tier_a", 0),
+                claimant_tier_b=params.get("claimant_tier_b", 0),
+                claimant_tier_c=params.get("claimant_tier_c", 0),
+                defense_tier_a=params.get("defense_tier_a", 0),
+                defense_tier_b=params.get("defense_tier_b", 0),
+                defense_tier_c=params.get("defense_tier_c", 0),
+                fatal_loopholes_claimant=params.get("fatal_loopholes_claimant", 0),
+                fatal_loopholes_defense=params.get("fatal_loopholes_defense", 0),
+                queen_defense_active=params.get("queen_defense_active", False),
+                procedural_defect_claimant=params.get("procedural_defect_claimant", False)
+            )
+            if args.json:
+                print(json.dumps(res, ensure_ascii=False, indent=2))
+            else:
+                print(format_case_probability(res))
 
         elif args.ask:
             result = ask_all(args.ask, limit=args.limit)

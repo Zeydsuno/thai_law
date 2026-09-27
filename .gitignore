@@ -7,3 +7,12 @@ Thumbs.db
 .vscode/
 .idea/
 *.log
+
+# Private Research Paper & Production Database Assets (Available upon request)
+Research_Paper_*.md
+*.pdf
+thai_law.db
+data/thai_law.db
+data/thai_law.db.zip
+*.db
+*.db.zip

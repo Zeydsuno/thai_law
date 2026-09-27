@@ -2,6 +2,13 @@
 
 ระบบ **Thai Legal RAG (Retrieval-Augmented Generation)** แบบ Local-First & Zero-Hallucination ความเร็วสูงระดับเสี้ยววินาที (< 2ms) ขับเคลื่อนด้วย **SQLite FTS5 (BM25) + Typed Cross-Reference Knowledge Graph** พร้อม **5 กลไกการคำนวณและวินิจฉัยทางนิติศาสตร์แบบดีเทอร์มินิสติก (Deterministic Legal Engines)** และการตรวจสอบความสมบูรณ์ระดับไบต์ด้วยรหัสลับ SHA-256 เทียบเคียงตัวบทจริงจากสำนักงานคณะกรรมการกฤษฎีกา 100%
 
+> [!IMPORTANT]
+> **ใบอนุญาตใช้งานและการคุ้มครองทรัพย์สินทางปัญญา (Intellectual Property & Noncommercial Notice):**  
+> ซอฟต์แวร์ สถาปัตยกรรม และงานวิจัยนี้ เผยแพร่ภายใต้สัญญาอนุญาต **PolyForm Noncommercial License 1.0.0** เพื่อวัตถุประสงค์ในการศึกษา การวิจัยทางวิชาการ (Academic Research) และการตรวจสอบสถาปัตยกรรม (Peer Review) เท่านั้น  
+> 🚫 **ไม่อนุญาตให้นำไปใช้ในเชิงพาณิชย์ แสวงหากำไร นำไปรันในสภาพแวดล้อม Production หรือเปิดบริการ API แข่งขันโดยไม่ได้รับอนุญาต**  
+> 🔒 **การคุ้มครองข้อมูลและเอกสารงานวิจัย (Data & Paper Protection):** เพื่อป้องกันการละเมิดทรัพย์สินทางปัญญาและการคัดลอกผลงานโดยมิได้รับอนุญาต เอกสารงานวิจัยฉบับสมบูรณ์และฐานข้อมูลคลังกฎหมายตัวเต็ม (`thai_law.db`) ได้รับการจัดเก็บเป็นทรัพย์สินส่วนบุคคล (Private Assets) และไม่ได้รวมอยู่ใน Public Git  
+> 💼 หากต้องการสิทธิ์เข้าถึงฐานข้อมูลคลังกฎหมายฉบับสมบูรณ์ (142 มาตรา / 1,049 ฎีกา), เอกสารงานวิจัยฉบับสมบูรณ์สำหรับ Peer Review หรือสิทธิ์ใช้งานเชิงพาณิชย์ (Commercial / Enterprise License) โปรดติดต่อผู้พัฒนาโดยตรง: **Attidmese Bunsua (นายอัตติรมีซี บุญเสือ / Zeydsuno)**
+
 สถาปัตยกรรมนี้ได้รับการออกแบบและพัฒนาขึ้นเพื่อแก้ไข 4 ข้อจำกัดสำคัญของแบบทดสอบมาตรฐาน **NitiBench (arXiv:2502.10868 โดย VISAI & VISTEC)**:
 1. **แก้ Context Bloat ของ NitiLink:** ใช้ **Typed Cross-Reference Graph** กรองเฉพาะข้อยกเว้น (`EXCEPTION`), เหตุฉกรรจ์/เพิ่มโทษ (`AGGRAVATION`), มาตราเชื่อมโยง (`REFERRED`) และบทนิยาม (`DEFINITION`) ที่เป็นจุดชี้ขาดทางคดีเท่านั้น
 2. **แก้ Nested Structure:** เชื่อมโยงมาตราความผิดและมาตราโทษผ่าน Relational Foreign Key ข้ามประมวลกฎหมาย ทำให้สืบค้นผลทางกฎหมายได้ครบถ้วนแม้บทบัญญัติจะอยู่ต่างหมวดหรือต่างประมวล
@@ -17,7 +24,7 @@
 - **โครงข่ายความรู้ข้ามประมวล (Cross References)**: 67 เส้นเชื่อม (`EXCEPTION`, `AGGRAVATION`, `REFERRED`, `DEFINITION`)
 - **คำพิพากษาศาลฎีกาบรรทัดฐาน (Legal Precedents)**: 1,049 คำพิพากษา (คัดกรองจาก TSCC Dataset และยืนยันตรงกับระบบศาลฎีกา `deka.supremecourt.or.th`)
 - **พจนานุกรมคำนิยามศัพท์ (Legal Glossary)**: 50 คำนิยาม
-- **การทดสอบมาตรฐานวิศวกรรม 4 มิติ**: ผ่าน 103 / 103 กรณีทดสอบ (Pass Rate 100.00% ใน 0.34 วินาที)
+- **การทดสอบมาตรฐานวิศวกรรม 4 มิติ**: ผ่าน 108 / 108 กรณีทดสอบ (Pass Rate 100.00% ใน 1.48 วินาที)
 
 ---
 
@@ -26,20 +33,20 @@
 ```
 thai_law/
 ├── data/
-│   ├── thai_law.db           # ฐานข้อมูล SQLite FTS5 (ตัวบท + ฎีกา + กราฟ + คำนิยาม)
-│   ├── thai_law.db.zip       # ไฟล์บีบอัดสำรอง (Auto-extract อัตโนมัติหากไฟล์ .db หาย)
-│   └── corpus_sections.json  # สรุปโครงสร้างคลังตัวบทในรูปแบบ JSON
+│   ├── corpus_sections.json  # สรุปโครงสร้างคลังตัวบทในรูปแบบ JSON
+│   └── thai_law.db           # [Private Asset] ฐานข้อมูลฉบับเต็ม (ขอรับได้เฉพาะทางวิชาการ/พาณิชย์)
 ├── raw_sources/              # ไฟล์ตัวบทกฎหมายต้นฉบับกฤษฎีกาแยกตามหมวดหมู่ (142 ไฟล์)
 │   └── manifest.json         # บัญชีคุมรหัสลับ SHA-256 ระดับไบต์
 ├── compile_corpus.py         # ตัวคอมไพล์ฐานข้อมูลและ Seed ข้อมูล (รองรับ --force)
 ├── harvester.py              # เครื่องมือสกัดตัวบทดิบและคำนวณแฮช SHA-256 บันทึกลง raw_sources
 ├── verify_integrity.py       # เครื่องมือ Audit ตรวจสอบความถูกต้องระดับไบต์ (Cryptographic Parity)
 ├── rag_engine.py             # กลไกสืบค้น RAG Engine, กราฟความรู้, และ 5 เครื่องมือวินิจฉัย
-├── test_suite_audit.py       # ชุดทดสอบอัตโนมัติ 4 มิติ (Base, Boundary, Edge, Corner รวม 103 เคส)
+├── test_suite_audit.py       # ชุดทดสอบอัตโนมัติ 4 มิติ (Base, Boundary, Edge, Corner รวม 108 เคส)
 ├── ingest_tscc.py            # ตัวนำเข้าคลังคำพิพากษาศาลฎีกาจาก TSCC Dataset
 ├── AUDIT_REPORT.md           # รายงานผลการ Audit คุณภาพระบบ 4 มิติ
-├── Research_Paper_Thai_Legal_RAG_Engine_v1_TH.md # เอกสารงานวิจัยฉบับสมบูรณ์
-├── LICENSE                   # สัญญาอนุญาตซอฟต์แวร์แบบ MIT
+├── DECISION.md               # บันทึกการตัดสินใจเชิงสถาปัตยกรรม (Architecture Decision Records - ADR 7 ข้อ)
+├── CITATION.cff              # บัญชีกำหนดการอ้างอิงทางวิชาการมาตรฐานสากล (GitHub Native Citation)
+├── LICENSE                   # สัญญาอนุญาตซอฟต์แวร์แบบ PolyForm Noncommercial 1.0.0
 └── README.md                 # คู่มือการใช้งานระบบ
 ```
 
@@ -162,9 +169,36 @@ python rag_engine.py --fetch-official 8477 2563
 
 ## เอกสารอ้างอิงและงานวิจัย (Research Citation)
 
-รายละเอียดการออกแบบสถาปัตยกรรมทางวิศวกรรมซอฟต์แวร์ การประเมินผล NitiBench และการพิสูจน์ทางคณิตศาสตร์ บันทึกไว้ในเอกสาร:
-[Research_Paper_Thai_Legal_RAG_Engine_v1_TH.md](Research_Paper_Thai_Legal_RAG_Engine_v1_TH.md)
+รายละเอียดการตัดสินใจเชิงสถาปัตยกรรม (ADR) บันทึกไว้ใน [DECISION.md](DECISION.md)  
+เอกสารงานวิจัยฉบับสมบูรณ์ (Full Academic Paper - 5 บท) พร้อมผลการประเมิน NitiBench และการพิสูจน์ทางคณิตศาสตร์ จัดเก็บเป็นความลับทางวิชาการ สามารถติดต่อขอรับเพื่อการตรวจสอบ (Peer Review) หรือวิจัยต่อยอดได้โดยตรงจากผู้ประพันธ์
 
-**ผู้วิจัย:** นายอัตติรมีซี บุญเสือ (Attidmese Bunsua)  
+### รูปแบบการอ้างอิง (BibTeX)
+หากคุณนำผลงานวิจัย สถาปัตยกรรม หรือโครงสร้างชุดข้อมูลนี้ไปใช้อ้างอิงทางวิชาการ โปรดอ้างอิงตามรูปแบบดังต่อไปนี้:
+
+```bibtex
+@misc{bunsua2026thailaw,
+  author       = {Bunsua, Attidmese},
+  title        = {Thai Law RAG Engine: Zero-Hallucination Legal AI Architecture with Cryptographic Verification and Hybrid Symbolic Engines},
+  year         = {2026},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/Zeydsuno/thai_law}}
+}
+```
+
+**ผู้วิจัยและผู้ถือลิขสิทธิ์:** นายอัตติรมีซี บุญเสือ (Attidmese Bunsua / Zeydsuno)  
 **โครงการ:** Thai Law Scholar & Legal Adversary Engine (2568-2569)  
-**ใบอนุญาต:** MIT License
+**สัญญาอนุญาต:** [PolyForm Noncommercial License 1.0.0](LICENSE) (สงวนลิขสิทธิ์สำหรับการใช้งานเชิงพาณิชย์)  
+
+---
+
+## สิทธิการใช้งานเชิงพาณิชย์ (Commercial & Enterprise Licensing)
+
+ซอฟต์แวร์นี้เปิดให้ตรวจสอบซอร์สโค้ดและใช้งานเพื่อการศึกษา/วิจัยโดยไม่คิดมูลค่า แต่**ไม่อนุญาตให้นำไปใช้ในเชิงพาณิชย์ หรือติดตั้งเป็นแกนหลักในระบบ Production ขององค์กรโดยไม่ได้รับอนุญาต**
+
+หากคุณเป็นบริษัท สตาร์ทอัพ สำนักงานกฎหมาย หรือหน่วยงานที่ต้องการ:
+1. สิทธิ์การใช้งานเชิงพาณิชย์ (Commercial License)
+2. สิทธิ์เข้าถึงฐานข้อมูลคลังตัวบทและฎีกาฉบับสมบูรณ์ (Full Production Corpus Database)
+3. บริการติดตั้งและเชื่อมต่อระบบเข้ากับระบบงานภายใน (Enterprise Integration & Support)
+
+กรุณาติดต่อผู้พัฒนา: **Attidmese Bunsua (นายอัตติรมีซี บุญเสือ)** ผ่านช่องทาง GitHub Issue หรือช่องทางติดต่อส่วนตัวของผู้พัฒนา
